@@ -1,0 +1,12 @@
+alveolar edema
+alveolar infiltrate
+severe pulmonary edema
+perihilar infiltrate
+hilar infiltrate
+parenchymal opacities
+alveolar opacities
+ill defined opacities
+patchy opacities
+perihilar opacity
+alveolar opacity
+parenchymal opacity

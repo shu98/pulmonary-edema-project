@@ -1,0 +1,34 @@
+regex
+cephaliz(ation|ed)
+interstitial opaci(ties|fied|fication)
+kerley
+hilar engorgement
+vascular plethora
+B\s*line(s|)
+interstitial thickening
+interstitial marking
+interstitial abnormalit(y|ies)
+interstitial process
+alveolar infiltrates
+perihilar infiltrates
+hilar infiltrates
+(bilateral |patchy |parenchymal |pulmonary |alveolar |)opaci(ties|fied|fication)
+heterogeneous (lung |)opaci(ties|fied|fication)
+ill(-|\s)defined opaci(ties|fied|fication)
+bat(-|)wing
+(pulmonary |)(vascular |)plethora
+(pulmonary |)(vascular |)(indistinct(ness|)|blurring)
+pulmonary vascular(ity|)
+perihilar (indistinctness|blurring)
+haz(e|y|iness)
+septal (line(s|)|thickening)
+(peri|)bronchial(thickening|cuffing)
+bronchial wall thickening
+per(i|)hilar fullness
+vascular (re)distribut(ed|ion)
+vascular recruitment
+loss of definition
+engorgement of the vascular pedicle
+chf
+(congestive |)heart failure
+cardiac decompensation
