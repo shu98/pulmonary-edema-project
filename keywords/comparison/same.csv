@@ -1,6 +1,7 @@
 regex
 again
 (little|no|without)( other|)( relevant|)( significant|)( overall|)( short|)( interval|) change
+(similar|unchanged) (appearance|radiograph)
 no new
 unchanged
 stable
@@ -12,4 +13,5 @@ remain(s|)
 ongoing
 same
 still
+not significantly changed
 

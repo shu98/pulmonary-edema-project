@@ -16,5 +16,3 @@ Requires
     c) Output: CSV file with automatic labels (boolean, relevant or not relevant)
     d) Command: python3 nlp/get_relevant_sentences.py data/chexpert-labels.csv data/automatic-relevance-labels.csv data/ground-truth-labels.csv
     e) Evaluate: python3 nlp/get_relevant_sentences.py data/ground-truth-labels.csv data/automatic-relevance-labels.csv data/evaluate-automatic-labels.csv
-
-4. 
