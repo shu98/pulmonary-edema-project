@@ -490,7 +490,7 @@
 488,"As compared to the previous image, the position of the Swan-Ganz catheter is unchanged",0.0,,,,0.0
 489,It is located in the peripheral parts of the right pulmonary artery,0.0,,,,0.0
 490,The device could be pulled back by approximately 4 cm,0.0,,,,0.0
-491,Unchanged appearance of the cardiac silhouette,1.0,,,,1.0
+491,Unchanged appearance of the cardiac silhouette,0.0,,,,1.0
 492,No pneumothorax,0.0,,,,0.0
 493,No overt pulmonary edema,1.0,0.0,0.0,,0.0
 494,"In comparison with the study of ___, the Swan-Ganz catheter has been pulled back so that it now lies within the right pulmonary artery at the outer mediastinal level",0.0,,,,0.0
@@ -669,7 +669,7 @@
 667,No large pleural effusion,0.0,,,,0.0
 668,Cardiomediastinal and hilar contours are stable,0.0,,,,1.0
 669,No pneumothorax,0.0,,,,0.0
-670,No significant change in right lower lobe consolidation,1.0,,,,1.0
+670,No significant change in right lower lobe consolidation,0.0,,,,1.0
 671,Mild-to-moderate pulmonary edema is unchanged,1.0,1.0,1.0,,
 672,"As compared to the previous radiograph, there is minimally improved pulmonary edema",1.0,1.0,1.0,,
 673,"However, the edema is still moderate in severity",1.0,1.0,1.0,,
@@ -799,8 +799,8 @@
 797,No pneumothorax,0.0,,,,0.0
 798,Normal appearance of the left lung,0.0,,,,0.0
 799,"In comparison with the earlier study of this date, the degree of loculated air at the right base has decreased",0.0,,,,0.0
-800,The overall effusion on the right seen is little change despite the presence of a chest tube,1.0,,,,1.0
-801,"Otherwise, little change in the appearance of the heart and lungs",1.0,,,,1.0
+800,The overall effusion on the right seen is little change despite the presence of a chest tube,0.0,,,,1.0
+801,"Otherwise, little change in the appearance of the heart and lungs",0.0,,,,1.0
 802,A right pleural catheter remains in place and there is a slightly smaller but persistent apical lateral pneumothorax,0.0,,,,1.0
 803,"Overall, there is improving aeration at the right base with decrease in size of the pleural collection",0.0,,,,0.0
 804,"The heart remains markedly enlarged which may reflect cardiomegaly, although a pericardial effusion cannot be excluded",0.0,,,,1.0
@@ -839,7 +839,7 @@
 837,"Compared to ___, 09:15, the right chest tube has been removed",0.0,,,,0.0
 838,The extent of the loculated right effusion is unchanged,0.0,,,,1.0
 839,"Unchanged moderate to severe cardiomegaly, without evidence of pulmonary edema",1.0,0.0,0.0,,1.0
-840,No significant change in right loculated hydropneumothorax,1.0,,,,1.0
+840,No significant change in right loculated hydropneumothorax,0.0,,,,1.0
 841,AP and lateral views of the chest,0.0,,,,0.0
 842,Low lung volumes are again noted,0.0,,,,0.0
 843,There has been interval enlargement of the pleural effusion on the right since prior,0.0,,,,1.0
@@ -924,12 +924,12 @@
 922,"As compared to the previous radiograph, the position of the right chest tube is slightly changed",0.0,,,,0.0
 923,"In unchanged manner, there is a millimetric right apical pneumothorax",0.0,,,,1.0
 924,"No evidence of tension, no parenchymal opacities",0.0,,,0.0,0.0
-925,"Unchanged appearance of the heart, unchanged left Port-A-Cath",1.0,,,,1.0
+925,"Unchanged appearance of the heart, unchanged left Port-A-Cath",0.0,,,,1.0
 926,The position of the right chest tube is unchanged,0.0,,,,0.0
 927,"On the current image, there is no longer a visualization of a right pneumothorax",0.0,,,,1.0
 928,No pleural effusion,0.0,,,,0.0
 929,"Overall, decreased lung volumes",0.0,,,,0.0
-930,Unchanged appearance of the left lung and of the cardiac silhouette,1.0,,,,1.0
+930,Unchanged appearance of the left lung and of the cardiac silhouette,0.0,,,,1.0
 931,"In comparison with the study of ___, the right chest tube remains in place",0.0,,,,0.0
 932,There is probably a small apical pneumothorax,0.0,,,,1.0
 933,Opacification at the right base in the costophrenic angle is consistent with fluid in the pleural space and some atelectasis,0.0,,,1.0,1.0
@@ -938,7 +938,7 @@
 936,Cardiomediastinal contours are stable allowing for patient rotation,0.0,,,,1.0
 937,"Mild pulmonary vascular congestion is present as well as worsening bibasilar opacities, particularly in the left retrocardiac region and periphery of right lung base",1.0,1.0,1.0,1.0,
 938,Small pleural effusions are again demonstrated,0.0,,,,1.0
-939,"No change, no right effusion",1.0,,,,0.0
+939,"No change, no right effusion",0.0,,,,0.0
 940,"In comparison with the study of ___, there is little interval change",1.0,,,,0.0
 941,Right chest tube remains in place and there is no evidence of pneumothorax,0.0,,,,0.0
 942,"As compared to the previous radiograph, the right chest tube remains in place",0.0,,,,0.0
@@ -971,7 +971,7 @@
 969,Small collection persists at the bases of the right hemithorax,0.0,,,,0.0
 970,Associated atelectasis is also seen,0.0,,,,1.0
 971,Minimal left pleural effusion is unchanged,0.0,,,,1.0
-972,Unchanged appearance of the cardiac silhouette,1.0,,,,1.0
+972,Unchanged appearance of the cardiac silhouette,0.0,,,,1.0
 973,"A right pigtail drain is seen at the base of the right lung, unchanged in position",0.0,,,,0.0
 974,A left central venous catheter is seen terminating in the low SVC and unchanged,0.0,,,,0.0
 975,"There is some opacity at the base of the right lung which likely represents increased atelectasis, however may also represent pneumonia or pulmonary hemorrhage in the appropriate clinical setting",0.0,,,,1.0
@@ -1029,7 +1029,7 @@
 1027,"Rapid change suggests pulmonary edema, though underlying pneumonia in the right lung should be considered in the appropriate clinical setting",1.0,1.0,1.0,,1.0
 1028,Single AP upright portable view of the chest was obtained,0.0,,,,0.0
 1029,The patient is rotated to the right,0.0,,,,0.0
-1030,"Given this, the left-sided AICD is without significant change in position",1.0,,,,0.0
+1030,"Given this, the left-sided AICD is without significant change in position",0.0,,,,0.0
 1031,Patient is status post median sternotomy,0.0,,,,0.0
 1032,"No focal consolidation, pleural effusion, or evidence of pneumothorax is seen",0.0,,,,0.0
 1033,The cardiac and mediastinal silhouettes are grossly stable given differences in patient position,0.0,,,,1.0
@@ -1051,7 +1051,7 @@
 1049,There is a bandlike consolidation extending from a masslike structure at the right hilum to the adjacent pleura,0.0,,,,1.0
 1050,"Cardiomegaly without vascular congestion is seen, suggesting either cardiomyopathy or pericardial effusion",1.0,0.0,0.0,,1.0
 1051,An apparent right hilar mass is seen for which a dedicated CT is recommended,0.0,,,,1.0
-1052,"In comparison with the earlier study of this date, there is little overall change in the appearance of the heart and lungs",1.0,,,,1.0
+1052,"In comparison with the earlier study of this date, there is little overall change in the appearance of the heart and lungs",0.0,,,,1.0
 1053,Again there is increased opacification at the left base consistent with volume loss in the lower lobe and pleural effusion,0.0,,,1.0,1.0
 1054,Prominence of the right hilum persists,0.0,,,,
 1055,"The curvilinear opacification extending from the hilum to the periphery is again seen, possibly slightly more prominent",1.0,,,1.0,
@@ -1142,7 +1142,7 @@
 1140,Slight decrease in mild pulmonary edema with less fluid in an accessory fissure in the right lower lobe,1.0,1.0,1.0,,
 1141,"No pleural effusions, or pneumothorax",0.0,,,,0.0
 1142,Slight decrease in mild pulmonary edema,1.0,1.0,1.0,,
-1143,"In comparison with the earlier study of this date, there is little change in the appearance of the right IJ catheter, which still extends into the right atrium and could be pulled back approximately 4-5 cm",1.0,,,,0.0
+1143,"In comparison with the earlier study of this date, there is little change in the appearance of the right IJ catheter, which still extends into the right atrium and could be pulled back approximately 4-5 cm",0.0,,,,0.0
 1144,Opacification at the left base is again consistent with substantial volume loss in the left lower lobe and pleural effusion,0.0,,,1.0,1.0
 1145,The possibility of supervening pneumonia would have to be considered,0.0,,,,1.0
 1146,"Pulmonary vessels are less well defined, suggesting some increasing pulmonary venous congestion",1.0,,1.0,,0.0
@@ -1150,7 +1150,7 @@
 1148,"In comparison with the earlier study of this date, there is now an endotracheal tube in place with its tip approximately 3",0.0,,,,0.0
 1149,7 cm above the carina,0.0,,,,0.0
 1150,The right IJ catheter again extends to the level of the cavoatrial junction,0.0,,,,0.0
-1151,Little change in the appearance of the heart and lungs,1.0,,,,1.0
+1151,Little change in the appearance of the heart and lungs,0.0,,,,1.0
 1152,Nasogastric tube has been placed that extends to at least the body of the stomach where it crosses the lower margin of the image,0.0,,,,0.0
 1153,"In comparison with the study of ___, the monitoring and support devices remain in place",0.0,,,,0.0
 1154,"There is decreased opacification at the right base, consistent with some decrease in pleural effusion",0.0,,,1.0,1.0
