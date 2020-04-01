@@ -35,7 +35,7 @@ def resolve_disagreements(labels, start, end):
     nochange_file = os.path.join(os.environ['PE_PATH'], 'keywords', 'no_change_regex.csv')
     nochange_keywords = pd.read_csv(nochange_file)['regex'].tolist()
 
-    index = end
+    index = end - 1
     related_rad_flag = None
     general_no_change = None
     while index > start:

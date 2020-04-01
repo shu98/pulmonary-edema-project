@@ -151,7 +151,7 @@ def main():
     metadata_file = "data/hf-metadata.csv"
     metadata_file = os.path.join(os.environ['PE_PATH'], metadata_file)
 
-    comparisons_file = "results/03182020/comparisons-document-all.csv"
+    comparisons_file = "results/03272020/comparisons-document-all.csv"
     comparisons_file = os.path.join(os.environ['PE_PATH'], comparisons_file)
     comparisons = pd.read_csv(comparisons_file, dtype={'subject': 'str', 'study': 'str'})
     comparisons.set_index('study', inplace=True)
@@ -162,7 +162,7 @@ def main():
     all_pairs, pairs_index, pairs_index_backward = process_pairwise(pairwise_reports, comparisons)
     discrepancies = compare(all_pairs, all_pairs_cindy, pairs_index, pairs_index_cindy, pairs_index_backward, pairs_index_backward_cindy)
     discrepancies = pd.DataFrame(discrepancies, columns=['subject', 'study1', 'study2', 'label1', 'label2', 'comparison_nlp', 'comparison_cv', 'true_comp'])
-    discrepancies.to_csv(os.path.join(os.environ['PE_PATH'], "results/comparison-cindy-diff.csv"))
+    discrepancies.to_csv(os.path.join(os.environ['PE_PATH'], "results/03272020/comparison-cindy-diff.csv"))
 
 if __name__ == "__main__":
     main()

@@ -164,7 +164,7 @@ def main():
 
         severity['severity'][index] = label
 
-    documents = pd.concat([documents, severity], axis=1)
+    documents = pd.concat([documents['subject'], documents['study'], documents['comparisons'], severity], axis=1)
     document.to_csv(os.path.join(csv_dir, 'results/03192020/automatic-document-labels.csv'))
 
 

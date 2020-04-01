@@ -90,7 +90,7 @@ def assign_other_finding(chexpert_sentences):
     other_finding = pd.DataFrame(float('nan'), index=np.arange(chexpert_sentences.shape[0]), columns=['other_finding'])
 
     # Columns to ignore 
-    ignore_labels = set(['Reports', 'Edema', 'Support Devices'])
+    ignore_labels = set(['Reports', 'Edema', 'Support Devices', 'Enlarged Cardiomediastinum', 'Cardiomegaly', 'Pneumothorax'])
 
     for index, row in chexpert_sentences.iterrows():
         for col in chexpert_sentences.columns:
@@ -197,23 +197,24 @@ def run_labeler(chexpert_label_path, metadata_labels_path, true_labels=False):
 
     sentences = chexpert_sentences['Reports'].to_frame().rename(columns={'Reports': 'sentence'})
     chexpert_label = abs(chexpert_sentences.loc[:, 'Edema']).to_frame().rename(columns={'Edema': 'chexpert_label'})
+    chexpert_label_unprocessed = chexpert_sentences.loc[:, 'Edema'].to_frame().rename(columns={'Edema': 'chexpert_label_unprocessed'})
     other_finding = assign_other_finding(chexpert_sentences)
     keyword_label = assign_keyword_label(sentences)
     related_rad_label = assign_related_rad(sentences)
 
-    labels = pd.concat([sentences, chexpert_label, keyword_label, related_rad_label, other_finding], axis=1)
+    labels = pd.concat([sentences, chexpert_label, chexpert_label_unprocessed, keyword_label, related_rad_label, other_finding], axis=1)
 
     if true_labels:
         relevant_labels = pd.concat([metadata['relevant']], axis=1)
         relevant_labels = relevant_labels.rename(columns={"relevant": "ground_truth"})
 
         return pd.concat([sentences, metadata['subject'], metadata['study'], get_final_label(labels, chexpert_sentences), \
-                        relevant_labels['ground_truth'], chexpert_label, keyword_label, related_rad_label, other_finding, \
-                        metadata['comparison'], metadata['comparison label']], axis=1)
+                        relevant_labels['ground_truth'], chexpert_label, chexpert_label_unprocessed, keyword_label, \
+                        related_rad_label, other_finding, metadata['comparison'], metadata['comparison label']], axis=1)
 
     else:
         return pd.concat([sentences, metadata['subject'], metadata['study'], get_final_label(labels, chexpert_sentences), \
-                        chexpert_label, keyword_label, related_rad_label, other_finding], axis=1)
+                        chexpert_label, chexpert_label_unprocessed, keyword_label, related_rad_label, other_finding], axis=1)
 
 def main_label():
     """

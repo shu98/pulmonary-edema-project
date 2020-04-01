@@ -32,7 +32,7 @@ def parse_txt(filename):
 def compare(severity_pairwise, comparison_labels):
     discrepancies = []
     does_not_exist = 0
-    for study1, study2, label1, label2 in severity_pairwise:
+    for subject, study1, study2, label1, label2 in severity_pairwise:
         if math.isnan(comparison_labels['comparison'][study2]):
             continue 
 
@@ -41,9 +41,9 @@ def compare(severity_pairwise, comparison_labels):
             continue
 
         if -np.sign(label2 - label1) != comparison_labels['comparison'][study2]:
-            discrepancies.append([study1, study2, label1, label2, comparison_labels['comparison'][study2]])
+            discrepancies.append([subject, study1, study2, label1, label2, comparison_labels['comparison'][study2]])
 
-    print("Total with no severity labels:", does_not_exist)
+    print("Total pairs with no severity labels:", does_not_exist)
     return discrepancies
 
 def get_pairwise_severity(series, severity_labels):
@@ -94,7 +94,7 @@ def main():
     severity_pairwise = get_pairwise_severity(sort_by_date(metadata), severities)
     
     discrepancies = pd.DataFrame(compare(severity_pairwise, comparisons), columns=['previous_study', 'next_study', 'previous_label', 'next_label', 'comparison_label'])
-    # discrepancies.to_csv(os.path.join(os.environ['PE_PATH'], "results/comparison-severity-label-errors.csv"))
+    # discrepancies.to_csv(os.path.join(os.environ['PE_PATH'], "results/comparison-ray-diff.csv"))
 
 if __name__ == "__main__":
     main()

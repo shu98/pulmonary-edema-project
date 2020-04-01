@@ -138,28 +138,33 @@ def get_full_series_as_dict(pairwise_severity, comparison_labels, edema_labels):
 
     return series 
 
-def split_by_inc_dec_segments(series):
+def split_by_inc_dec_segments(series, nan_assumption='no_edema'):
     segments = []
     current = [(series[0]['study1'], 0)]
     current_direction = 0
     for comp in series:
-        if math.isnan(comp['comparison']):
-            segments.append(current)
-            current = [(comp['study2'], 0)]
-            current_direction = 0
-            continue 
+        if nan_assumption == 'no_edema':
+            if math.isnan(comp['comparison']):
+                segments.append(current)
+                current = [(comp['study2'], 0)]
+                current_direction = 0
+                continue 
+
+        current_comp = comp['comparison']
+        if nan_assumption == 'no_change':
+            current_comp = 0.0 if math.isnan(current_comp) else current_comp
 
         if current_direction != 0:
-            if comp['comparison'] != 0 and comp['comparison'] != current_direction:
+            if current_comp != 0 and current_comp != current_direction:
                 segments.append(current)
                 current = [(comp['study1'], 0)]
                 current_direction = 0
 
         last_study, last_score = current[-1]
-        current.append((comp['study2'], last_score + comp['comparison'] ))
+        current.append((comp['study2'], last_score +  current_comp))
 
         if current_direction == 0:
-            current_direction = comp['comparison'] 
+            current_direction = current_comp
 
     segments.append(current)
     return segments 
@@ -184,6 +189,9 @@ def sort_series(series):
     for study1, study2, comp in series:
         if study1 not in studies:
             studies[study1] = 0
+
+        if study2 not in studies:
+            studies[study2] = 0
 
         studies[study1] += comp 
 
@@ -224,30 +232,53 @@ def get_pairwise_severity(series, severity_labels):
 
     return severity_pairiwse
 
+def rank_single_series(series, counter):
+    if len(series) == 0:
+        return series 
+
+    subject = series[0]['subject']
+    if subject not in counter:
+        counter[subject] = 0
+
+    comps = split_by_inc_dec_segments(series)
+
+    all_pairs_example = []
+    for segment in comps:
+        all_pairs_example.extend(construct_pairwise_comparisons(segment))
+
+    sorted_series = sort_series(all_pairs_example)
+
+    for index, elem in enumerate(sorted_series):
+        sorted_series[index] = list(elem)
+
+    # Add all studies without a comparison 
+    all_studies = set()
+    for elem in series:
+        all_studies.add(elem['study1'])
+        all_studies.add(elem['study2'])
+
+    not_included = list(all_studies.difference(set([s[0] for s in sorted_series])))
+    for index, elem in enumerate(not_included):
+        not_included[index] = [elem, float('inf')]
+
+    sorted_series = not_included + sorted_series
+    return subject, sorted_series, counter
+
 def rank_all(all_series, foldername):
     folderpath = os.path.join(os.environ['PE_PATH'], foldername)
     if not os.path.exists(folderpath):
         os.makedirs(folderpath)
 
+    counter = {}
     for i, series in enumerate(all_series):
-        if len(series) == 0:
-            continue 
+        subject, sorted_series, counter = rank_single_series(series, counter)
+        subject_folder = "{}/p{}/".format(folderpath, subject)
+        if not os.path.exists(subject_folder):
+            os.makedirs(subject_folder)
 
-        subject = series[0]['subject']
-        if (i+1) % 500 == 0:
-            print("Wrote {} rankings".format(i+1)) 
-
-        comps = split_by_inc_dec_segments(series)
-        all_pairs_example = []
-        for segment in comps:
-            all_pairs_example.extend(construct_pairwise_comparisons(segment))
-
-        sorted_series = sort_series(all_pairs_example)
-        for index, elem in enumerate(sorted_series):
-            sorted_series[index] = list(elem)
-
-        filename = "{}/p{}.csv".format(folderpath, subject)
-        pd.DataFrame(sorted_series).to_csv(filename)
+        filename = "{}/{}.csv".format(subject_folder, counter[subject])
+        pd.DataFrame(sorted_series).to_csv(filename, header=['study', 'score'])
+        counter[subject] += 1
 
 def get_edema_label_document(labels, start, end):
     index = start
@@ -291,10 +322,16 @@ def infer_edema_label(series):
     """
     for s in series: 
         for index, elem in enumerate(s):
-            if not math.isnan(elem['edema2']):
+            # Comparison takes precedent over evaluation statements
+            if elem['comparison'] == 0.0:
+                elem['edema2'] = elem['edema1']
+                if index < len(s) - 1:
+                    s[index + 1]['edema1'] = elem['edema1']
+
+            elif not math.isnan(elem['edema2']):
                 continue 
 
-            if elem['comparison'] == 0.0 or math.isnan(elem['comparison']):
+            if math.isnan(elem['comparison']):
                 elem['edema2'] = elem['edema1']
                 if index < len(s) - 1:
                     s[index + 1]['edema1'] = elem['edema1']
@@ -328,6 +365,9 @@ def infer_comparison_label(series):
                 elif elem['edema1'] == 0.0 or elem['label1'] == 0.0:
                     elem['comparison'] = -1.0
 
+        if s[0]['subject'] == "11124675" and len(s) > 10:
+            pprint(s)
+
     return series 
      
 def main():
@@ -360,15 +400,24 @@ def main():
     all_series = infer_comparison_label(all_series)
     rank_all(all_series, args.result_folder)
     
-    current_max, second_max = all_series[0], all_series[1]
-    if len(second_max) > len(current_max):
-        current_max, second_max = second_max, current_max 
+    all_series.sort(reverse=True, key=lambda x: len(x))
+    to_validate = {}
+    for index, series in enumerate(all_series):
+        if index == 20:
+            break 
+        to_validate[series[0]['subject']] = (series[0]['study1'], series[0]['study2'])
 
-    for s in all_series:
-        if len(s) > len(current_max):
-            current_max, second_max = s, current_max 
-        elif len(s) > len(second_max):
-            second_max = s 
+    for i in range(20):
+        index = np.random.randint(20, len(all_series) - 1)
+        subject = all_series[index][0]['subject']
+        if subject not in to_validate:
+            to_validate[subject] = (all_series[index][0]['study1'], all_series[index][0]['study2'])
+
+    list_for_df = []
+    for subject, studies in to_validate.items():
+        list_for_df.append([subject, studies[0], studies[1]])
+
+    pd.DataFrame(list(list_for_df)).to_csv("results/03262020/rankings-to-validate.csv", header=['subject', 'study1', 'study2'])
 
     # print(current_max[0] + (str(get_datetime(metadata['study_date'][current_max[0][1]], metadata['study_time'][current_max[0][1]])),))
     # for e in current_max:
@@ -377,12 +426,11 @@ def main():
     # pprint(second_max)
     
     # comps = split_by_inc_dec_segments(current_max)
-    # print(comps)
     # all_pairs_example = []
     # for segment in comps:
     #     all_pairs_example.extend(construct_pairwise_comparisons(segment))
 
-    # pprint(sort_series(all_pairs_example))
+    # pprint(len(sort_series(all_pairs_example)))
 
 
 if __name__ == "__main__":

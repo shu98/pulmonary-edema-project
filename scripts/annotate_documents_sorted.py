@@ -82,25 +82,24 @@ def newline_to_ptag(report):
     return "".join(report_split)
 
 def markup_report(labels, start, end, reports_dir, true_labels, metadata):
+    index = start 
+    subject, study = labels['subject'][index], labels['study'][index]
+
     document_label = aggregate_sentences(labels, start, end)
+    annotations = []
     if document_label == float('inf'):
-        document_label = "disagreement"
-    elif document_label == 1.0:
+        document_label = resolve_disagreements(labels, start, end)
+
+    if document_label == 1.0:
         document_label = "better"
     elif document_label == -1.0:
         document_label = "worse"
     elif document_label == 0.0:
         document_label = "same"
 
-    index = start 
-    subject, study = labels['subject'][index], labels['study'][index]
-
-    annotations = []
-
-    should_show = document_label == "disagreement"
+    should_show = document_label == float('inf')
     if should_show:
         annotations.append("<div>")
-        document_label = resolve_disagreements(labels, start, end)
     else:
         annotations.append("<div class=\"hide\">")
    
