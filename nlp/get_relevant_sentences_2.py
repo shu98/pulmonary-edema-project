@@ -192,10 +192,10 @@ def run_labeler(chexpert_label_path, metadata_labels_path, true_labels=False):
 
     columns = []
     if true_labels:
-        columns = ['sentence', 'subject', 'study', 'relevance', 'ground_truth_relevance', 'chexpert_label', 'chexpert_unprocessed', \
+        columns = ['sentence', 'subject', 'study', 'relevant', 'ground_truth_relevant', 'chexpert_label', 'chexpert_unprocessed', \
                     'keyword_label', 'related_rad_label', 'other_finding', 'comparison_finding', 'comparison_label']
     else:
-        columns = ['sentence', 'subject', 'study', 'relevance', 'chexpert_label', 'chexpert_unprocessed', 'keyword_label', 'related_rad_label', 'other_finding']
+        columns = ['sentence', 'subject', 'study', 'relevant', 'chexpert_label', 'chexpert_unprocessed', 'keyword_label', 'related_rad_label', 'other_finding']
 
     df = pd.DataFrame(all_data, columns=columns)
     return df 
