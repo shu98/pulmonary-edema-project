@@ -13,7 +13,7 @@ import pandas as pd
 import pprint
 import re 
 
-from util.evaluate import  evaluate
+from util.evaluate import evaluate
 from util.negation import is_positive
 
 class CONSTANTS:
@@ -90,7 +90,7 @@ def assign_other_finding(chexpert_sentences):
     other_finding = pd.DataFrame(float('nan'), index=np.arange(chexpert_sentences.shape[0]), columns=['other_finding'])
 
     # Columns to ignore 
-    ignore_labels = set(['Reports', 'Edema', 'Support Devices'])
+    ignore_labels = set(['Reports', 'Edema', 'Support Devices', 'Enlarged Cardiomediastinum', 'Cardiomegaly', 'Pneumothorax'])
 
     for index, row in chexpert_sentences.iterrows():
         for col in chexpert_sentences.columns:
@@ -100,7 +100,10 @@ def assign_other_finding(chexpert_sentences):
 
             # If no finding is positive, then assume no other findings are present 
             elif col == 'No Finding' and row[col] == 1.0:
-                other_finding['other_finding'][index] = 0.0
+                for other_col in chexpert_sentences.columns:
+                    if other_col not in ignore_labels and row[other_col] == 0.0:
+                        other_finding['other_finding'][index] = 0.0 
+                # other_finding['other_finding'][index] = 0.0
 
             # Handle 'Lung Opacity' label, which could be indicative of pulmonary edema
             elif col == 'Lung Opacity':
@@ -124,7 +127,16 @@ def assign_other_finding(chexpert_sentences):
 
     return other_finding 
 
-def get_final_label(labels):
+def get_other_finding_mention(chexpert_row):
+    ignore_labels = set(['Reports', 'Edema', 'No Finding'])
+    for col in chexpert_row.index:
+        # Skip if column should be ignored or if cell value is empty, e.g. no mention 
+        if col not in ignore_labels and not math.isnan(chexpert_row[col]): 
+            return True 
+
+    return False  
+
+def get_final_label(labels, chexpert_labels):
     """
     labels  Pandas dataframe with the following columns
             - Sentences
@@ -154,9 +166,17 @@ def get_final_label(labels):
         # If sentence indicates no general change in condition, then consider it to be relevant
         for key in nochange_keywords:
             if re.search(key, row['sentence'].lower()) is not None:
-                final_label['relevant'][index] = 1.0
-
+                # Exclude phrases like "no change in cardiomegaly" or "stable atelectasis"
+                if math.isnan(row['chexpert_label']) and get_other_finding_mention(chexpert_labels.iloc[index]):
+                    final_label['relevant'][index] = 0.0
+                else:
+                    final_label['relevant'][index] = 1.0
     return final_label
+
+def print_incorrect(true_labels, predicted_labels):
+    for index, sentence in true_labels.iterrows():
+        if sentence['relevant'] != predicted_labels['relevant'][index]:
+            print(predicted_labels['relevant'][index], sentence['relevant'], sentence['sentence'])        
 
 def evaluate_labeler(true_labels_path, predicted_labels_path, output_path=None):
     true_labels = pd.read_csv(true_labels_path)
@@ -168,22 +188,33 @@ def evaluate_labeler(true_labels_path, predicted_labels_path, output_path=None):
         result_df = pd.Series(result).to_frame()
         result_df.to_csv(output_path)
     
-    pprint.pprint(result)        
+    pprint.pprint(result)   
+    print_incorrect(true_labels, predicted_labels)     
 
-def run_labeler(chexpert_label_path, true_labels_path):
+def run_labeler(chexpert_label_path, metadata_labels_path, true_labels=False):
     chexpert_sentences = pd.read_csv(chexpert_label_path)
-    true_labels = pd.read_csv(true_labels_path)
+    metadata = pd.read_csv(metadata_labels_path)
 
     sentences = chexpert_sentences['Reports'].to_frame().rename(columns={'Reports': 'sentence'})
     chexpert_label = abs(chexpert_sentences.loc[:, 'Edema']).to_frame().rename(columns={'Edema': 'chexpert_label'})
+    chexpert_label_unprocessed = chexpert_sentences.loc[:, 'Edema'].to_frame().rename(columns={'Edema': 'chexpert_label_unprocessed'})
     other_finding = assign_other_finding(chexpert_sentences)
     keyword_label = assign_keyword_label(sentences)
     related_rad_label = assign_related_rad(sentences)
 
-    labels = pd.concat([sentences, chexpert_label, keyword_label, related_rad_label, other_finding], axis=1)
+    labels = pd.concat([sentences, chexpert_label, chexpert_label_unprocessed, keyword_label, related_rad_label, other_finding], axis=1)
 
-    final_labels = pd.concat([sentences, get_final_label(labels), chexpert_label, keyword_label, related_rad_label, other_finding], axis=1)
-    return final_labels
+    if true_labels:
+        relevant_labels = pd.concat([metadata['relevant']], axis=1)
+        relevant_labels = relevant_labels.rename(columns={"relevant": "ground_truth"})
+
+        return pd.concat([sentences, metadata['subject'], metadata['study'], get_final_label(labels, chexpert_sentences), \
+                        relevant_labels['ground_truth'], chexpert_label, chexpert_label_unprocessed, keyword_label, \
+                        related_rad_label, other_finding, metadata['comparison'], metadata['comparison label']], axis=1)
+
+    else:
+        return pd.concat([sentences, metadata['subject'], metadata['study'], get_final_label(labels, chexpert_sentences), \
+                        chexpert_label, chexpert_label_unprocessed, keyword_label, related_rad_label, other_finding], axis=1)
 
 def main_label():
     """
@@ -206,7 +237,7 @@ def main_label():
     output_labels_path = os.path.join(os.environ['PE_PATH'], args.output_labels_path)
     true_labels_path = os.path.join(os.environ['PE_PATH'], args.true_labels_path)
 
-    final_labels = run_labeler(chexpert_labels_path, true_labels_path)
+    final_labels = run_labeler(chexpert_labels_path, true_labels_path, true_labels=True)
     final_labels.to_csv(output_labels_path)
 
     evaluate_labeler(true_labels_path, output_labels_path)
@@ -234,8 +265,33 @@ def main_evaluate():
 
     evaluate_labeler(true_labels_path, predicted_labels_path, output_path=output_path)
 
+def main_predict():
+    """
+    Run labeler for pulmonary edema relevance. Also saves output labels of automatic labeler
+
+    Requires as inputs
+        1. CSV file with results of CheXpert labeler
+        2. Filename to write the results of this automatic labeler
+        3. CSV file with metadata
+    """
+    parser = argparse.ArgumentParser(description='Get sentences relevant to pulmonary edema')
+
+    # Relative paths to PE_PATH
+    parser.add_argument('chexpert_labels_path', type=str, help='Path to file with chexpert-labeled sentences')
+    parser.add_argument('output_labels_path', type=str, help='Path to file to write output labels')
+    parser.add_argument('metadata_labels_path', type=str, help='Path to file with subject and study labels')
+    args = parser.parse_args()
+
+    chexpert_labels_path = os.path.join(os.environ['PE_PATH'], args.chexpert_labels_path)
+    output_labels_path = os.path.join(os.environ['PE_PATH'], args.output_labels_path)
+    metadata_labels_path = os.path.join(os.environ['PE_PATH'], args.metadata_labels_path)
+
+    final_labels = run_labeler(chexpert_labels_path, metadata_labels_path)
+    final_labels.to_csv(output_labels_path)
+
 if __name__ == "__main__":
-    main_label()
+    # main_label()
     # main_evaluate()
+    main_predict()
 
     
