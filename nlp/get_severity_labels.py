@@ -10,6 +10,7 @@ import sys
 # negex_path = os.path.join(current_path, 'negex/negex.python/')
 negex_path = os.path.join(os.environ['PE_PATH'], 'negex/negex.python/')
 sys.path.insert(0, negex_path)
+print(sys.path)
 import negex
 
 class WordMatch(object):
@@ -103,7 +104,7 @@ def main():
     HF_reports = []
     reports_to_label = ''
     csv_dir = '/home/shu98/pe-data/codebase'
-    HF_label_path = os.path.join(csv_dir, 'results/03192020/comparisons-document-all.csv')
+    HF_label_path = os.path.join(csv_dir, 'results/03272020/comparisons-document-all.csv')
     documents = pd.read_csv(HF_label_path, dtype={"study": "str", "subject": "str"})
 
     level0_words = ['no pulmonary edema', 'no vascular congestion',\
@@ -124,48 +125,59 @@ def main():
                     'patchy opacities']
 
     severity = pd.DataFrame(float('nan'), index=np.arange(documents.shape[0]), columns=['severity']) 
+    keywords = pd.DataFrame('', index=np.arange(documents.shape[0]), columns=['severity_keywords'])
+    sentences = pd.DataFrame('', index=np.arange(documents.shape[0]), columns=['severity_sentences'])
     for index, row in documents.iterrows():
         report_path = os.path.join(report_dir, "p{}".format(row['subject']), "s{}.txt".format(row['study']))
         file = open(report_path, 'r')
         report = file.read()
-        sentences = re.split('\.|\:', report)
+        sentences_split = re.split('\.|\:', report)
         label = float('nan')
-        for sentence in sentences:
+        keyword = ''
+        sent = ''
+        for sentence in sentences_split:
             word_match = WordMatch(sentence, level0_words)
             level0_mentioned = word_match.mention()
             for k in level0_mentioned:
                 if level0_mentioned[k]:
                     label = 0
                     keyword = k
+                    sent = sentence
             word_match = WordMatch(sentence, level0_words_n)
             level0_mentioned = word_match.mention_negative()
             for k in level0_mentioned:
                 if level0_mentioned[k]:
                     label = 0
-                    keyword = k             
+                    keyword = 'negated ' + k
+                    sent = sentence
             word_match = WordMatch(sentence, level1_words)
             level1_mentioned = word_match.mention_positive()
             for k in level1_mentioned:
                 if level1_mentioned[k]:
                     label = 1
                     keyword = k
+                    sent = sentence
             word_match = WordMatch(sentence, level2_words)
             level2_mentioned = word_match.mention_positive()
             for k in level2_mentioned:
                 if level2_mentioned[k]:
                     label = 2
                     keyword = k
+                    sent = sentence
             word_match = WordMatch(sentence, level3_words)
             level3_mentioned = word_match.mention_positive()
             for k in level3_mentioned:
                 if level3_mentioned[k]:
                     label = 3
                     keyword = k 
+                    sent = sentence
 
         severity['severity'][index] = label
+        keywords['severity_keywords'][index] = keyword
+        sentences['severity_sentences'][index] = sent
 
-    documents = pd.concat([documents['subject'], documents['study'], documents['comparisons'], severity], axis=1)
-    document.to_csv(os.path.join(csv_dir, 'results/03192020/automatic-document-labels.csv'))
+    documents = pd.concat([documents['subject'], documents['study'], severity, keywords, sentences], axis=1)
+    documents.to_csv(os.path.join(csv_dir, 'results/04092020/automatic-document-labels-severity.csv'))
 
 
 if __name__ == '__main__': 

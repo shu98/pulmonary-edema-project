@@ -14,7 +14,7 @@ def is_positive(sentence, keywords, mode='last'):
     keywords    list of keywords to look for in sentence 
     mode        aggregation method when more than one keyword is present
                 'first'     return flag for first keyword found
-                'last'      return flag for last keyword found 
+                'last'      default, return flag for last keyword found
                 'majority'  return T/F depending on relative number of keywords that are positive/negative
                 'sum'       return T if at least one keyword is positive
 
@@ -55,4 +55,5 @@ def is_positive(sentence, keywords, mode='last'):
         if num_pos >= num_neg: return True 
         else: return False 
 
+    # If mode is 'last', return flag for last keyword detected 
     return flag

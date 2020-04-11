@@ -39,4 +39,3 @@ Requires
 	a) Input: sentence-level relegance labels and comparison labels, folder with radiology reports
 	b) Output: HTML file with sentences annotated based on model predictions 
 	c) Command: python scripts/annotate_documents_sorted.py results/03182020/comparisons-labeled-from-automatic-all.csv data/hf-metadata.csv /home/shu98/radiology/files results/03182020/comparison-sentences-annotations-all.html
-
