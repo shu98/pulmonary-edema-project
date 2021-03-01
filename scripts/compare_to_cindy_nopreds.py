@@ -3,6 +3,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from datetime import datetime, timedelta 
 import math 
+import numpy as np 
 import pandas as pd 
 from pprint import pprint
 from dataset.organize_reports import sort_by_date, get_metadata
@@ -17,8 +18,7 @@ def process_pairwise_cindy(data):
                     'study2': row['study_id2'],
                     'label1': row['edema1'],
                     'label2': row['edema2'],
-                    'true_comp': row['y'],
-                    'predicted_comp': row['y_pred']})
+                    'predicted_comp': np.sign(row['edema_diff'])})
         pairs_index["{}{}".format(row['study_id1'], row['study_id2'])] = index
         pairs_index_backward["{}{}".format(row['study_id2'], row['study_id1'])] = index
 
@@ -46,7 +46,7 @@ def get_pairwise_reports(series):
     report_list     list of studies for a single patient 
 
     Returns 
-    list of tuples of study reports (subject, study1, study2), where the date for study1 is prior to study2
+    list of tuples of study reports (subject, study1, study2, label1, label2), where the date for study1 is prior to study2
     """
     pairiwse = []
     for subject, reports in series.items():
@@ -74,7 +74,6 @@ def compare(pairs, pairs_cindy, pairs_index, pairs_index_cindy, pairs_index_back
     overlap3 = set(pairs_index.keys()).intersection(set(pairs_index_backward_cindy.keys()))
     overlap4 = set(pairs_index.keys()).intersection(set(pairs_index_backward_cindy.keys()))
     overlap = overlap1.union(overlap2).union(overlap3).union(overlap4)
-    print("Overlap:", len(overlap))
 
     total = 0 
 
@@ -108,7 +107,7 @@ def compare(pairs, pairs_cindy, pairs_index, pairs_index_cindy, pairs_index_back
             pair_data_cindy = pairs_cindy[comparison_index_cindy]
             pair_data_cindy['study1'], pair_data_cindy['study2'] = pair_data_cindy['study2'], pair_data_cindy['study1']
             pair_data_cindy['label1'], pair_data_cindy['label2'] = pair_data_cindy['label2'], pair_data_cindy['label1']
-            pair_data_cindy['predicted_comp'], pair_data_cindy['true_comp'] = -pair_data_cindy['predicted_comp'], -pair_data_cindy['true_comp']
+            pair_data_cindy['predicted_comp'] = -pair_data_cindy['predicted_comp']
             is_backward_cindy = True 
 
 
@@ -153,7 +152,6 @@ def compare(pairs, pairs_cindy, pairs_index, pairs_index_cindy, pairs_index_back
 
         comparison_label = pair_data['predicted_comp']
         comparison_label_cindy = pair_data_cindy['predicted_comp']
-        true_label = pair_data_cindy['true_comp']
 
         to_append = [
                         pair_data['subject'],
@@ -163,7 +161,6 @@ def compare(pairs, pairs_cindy, pairs_index, pairs_index_cindy, pairs_index_back
                         pair_data_cindy['label2'] if pair_data['study2'] == pair_data_cindy['study2'] else pair_data_cindy['label1'],
                         comparison_label,
                         comparison_label_cindy if pair_data['study1'] == pair_data_cindy['study1'] else -comparison_label_cindy,
-                        true_label if pair_data['study1'] == pair_data_cindy['study1'] else -true_label
                     ]
 
         if math.isnan(comparison_label):
@@ -181,7 +178,7 @@ def compare(pairs, pairs_cindy, pairs_index, pairs_index_cindy, pairs_index_back
     return discrepancies, no_comparison_label, agreements
 
 def main():
-    cindy_data = pd.read_csv("data/comparison-data/cindy_pairs_feature1024_test_result_all.csv", \
+    cindy_data = pd.read_csv("data/comparison-data/cindy_mimic_labV2_pairs_test.csv", \
         dtype={'study_id1': 'str', 'study_id2': 'str', 'sub_id': 'str', 'y_pred': 'float'})
     
     all_pairs_cindy, pairs_index_cindy, pairs_index_backward_cindy = process_pairwise_cindy(cindy_data)
@@ -200,22 +197,22 @@ def main():
     all_pairs, pairs_index, pairs_index_backward = process_pairwise(pairwise_reports, comparisons)
     discrepancies, no_comparison_label, agreements = compare(all_pairs, all_pairs_cindy, pairs_index, pairs_index_cindy, pairs_index_backward, pairs_index_backward_cindy)
     
-    columns = ['subject', 'study1', 'study2', 'label1', 'label2', 'comparison_nlp', 'comparison_cv', 'true_comp']
+    columns = ['subject', 'study1', 'study2', 'label1', 'label2', 'comparison_nlp', 'true_comp']
     discrepancies = pd.DataFrame(discrepancies, columns=columns)
-    # discrepancies.to_csv(os.path.join(os.environ['PE_PATH'], "results/04202020/comparison-cindy-diff.csv"))
+    discrepancies.to_csv(os.path.join(os.environ['PE_PATH'], "results/04202020/test/comparison-cindy-diff.csv"))
 
     no_comparison_label = pd.DataFrame(no_comparison_label, columns=columns)
-    # no_comparison_label.to_csv(os.path.join(os.environ['PE_PATH'], "results/04202020/comparison-cindy-no-comparison.csv"))
+    no_comparison_label.to_csv(os.path.join(os.environ['PE_PATH'], "results/04202020/test/comparison-cindy-no-comparison.csv"))
 
     agreements = pd.DataFrame(agreements, columns=columns)
-    # agreements.to_csv(os.path.join(os.environ['PE_PATH'], "results/04202020/comparison-cindy-agree.csv"))
+    agreements.to_csv(os.path.join(os.environ['PE_PATH'], "results/04202020/test/comparison-cindy-agree.csv"))
 
     all_pairs_df = []
     for pair in all_pairs: 
         all_pairs_df.append([pair['subject'], pair['study1'], pair['study2'], pair['predicted_comp']])
 
     all_pairs_df = pd.DataFrame(all_pairs_df, columns=['subject', 'study1', 'study2', 'predicted_comparison'])
-    # all_pairs_df.to_csv(os.path.join(os.environ['PE_PATH'], "results/04202020/all-pairs-comparison.csv"))
+    all_pairs_df.to_csv(os.path.join(os.environ['PE_PATH'], "results/04202020/test/all-pairs-comparison.csv"))
 
 if __name__ == "__main__":
     main()

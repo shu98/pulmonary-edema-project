@@ -40,7 +40,7 @@ def compare(severity_pairwise, comparison_labels):
             does_not_exist += 1
             continue
 
-        if -np.sign(label2 - label1) != comparison_labels['comparison'][study2]:
+        if np.sign(label2 - label1) != comparison_labels['comparison'][study2]:
             discrepancies.append([subject, study1, study2, label1, label2, comparison_labels['comparison'][study2]])
 
     print("Total pairs with no severity labels:", does_not_exist)
@@ -77,14 +77,14 @@ def get_pairwise_severity(series, severity_labels):
     return severity_pairiwse
 
 def main():
-    ray_file = "data/ray_results_images_preds.txt"
+    ray_file = "data/comparison-data/ray_results_images_preds.txt"
     ray_file = os.path.join(os.environ['PE_PATH'], ray_file)
     severities = parse_txt(ray_file)
 
     metadata_file = "data/hf-metadata.csv"
     metadata_file = os.path.join(os.environ['PE_PATH'], metadata_file)
 
-    comparisons_file = "results/comparisons-document-all.csv"
+    comparisons_file = "results/04142020/comparisons-document-all.csv"
     comparisons_file = os.path.join(os.environ['PE_PATH'], comparisons_file)
     comparisons = pd.read_csv(comparisons_file, dtype={'study': 'str'})
     comparisons.set_index('study', inplace=True)
@@ -93,7 +93,7 @@ def main():
     metadata = get_metadata(metadata_file, subset=severities)
     severity_pairwise = get_pairwise_severity(sort_by_date(metadata), severities)
     
-    discrepancies = pd.DataFrame(compare(severity_pairwise, comparisons), columns=['previous_study', 'next_study', 'previous_label', 'next_label', 'comparison_label'])
+    discrepancies = pd.DataFrame(compare(severity_pairwise, comparisons), columns=['subject', 'previous_study', 'next_study', 'previous_label', 'next_label', 'comparison_label'])
     # discrepancies.to_csv(os.path.join(os.environ['PE_PATH'], "results/comparison-ray-diff.csv"))
 
 if __name__ == "__main__":

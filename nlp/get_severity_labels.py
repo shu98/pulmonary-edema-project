@@ -104,7 +104,7 @@ def main():
     HF_reports = []
     reports_to_label = ''
     csv_dir = '/home/shu98/pe-data/codebase'
-    HF_label_path = os.path.join(csv_dir, 'results/03272020/comparisons-document-all.csv')
+    HF_label_path = os.path.join(csv_dir, 'results/04122020/comparisons-document-all.csv')
     documents = pd.read_csv(HF_label_path, dtype={"study": "str", "subject": "str"})
 
     level0_words = ['no pulmonary edema', 'no vascular congestion',\
@@ -177,7 +177,7 @@ def main():
         sentences['severity_sentences'][index] = sent
 
     documents = pd.concat([documents['subject'], documents['study'], severity, keywords, sentences], axis=1)
-    documents.to_csv(os.path.join(csv_dir, 'results/04092020/automatic-document-labels-severity.csv'))
+    documents.to_csv(os.path.join(csv_dir, 'results/04122020/automatic-document-labels-severity.csv'))
 
 
 if __name__ == '__main__': 

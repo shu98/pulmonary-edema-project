@@ -85,35 +85,36 @@ def markup_report(labels, start, end, reports_dir, true_labels, metadata):
     index = start 
     subject, study = labels['subject'][index], labels['study'][index]
 
-    document_label = aggregate_sentences(labels, start, end)
+    document_label, magnitude = aggregate_sentences(labels, start, end)
+    should_show = document_label == float('inf')
     annotations = []
     if document_label == float('inf'):
-        document_label = resolve_disagreements(labels, start, end)
+        document_label, magnitude = resolve_disagreements(labels, start, end)
 
     if document_label == 1.0:
-        document_label = "better"
-    elif document_label == -1.0:
         document_label = "worse"
+    elif document_label == -1.0:
+        document_label = "better"
     elif document_label == 0.0:
         document_label = "same"
 
-    should_show = document_label == float('inf')
     if should_show:
         annotations.append("<div>")
     else:
         annotations.append("<div class=\"hide\">")
    
     study_date = get_datetime(metadata['study_date'][study], metadata['study_time'][study])
-    annotations.append("<p>SubjectID: {}, StudyID: {}, Date: {}, {}</p>".format(subject, study, study_date, html_element("span", HTML_CLASSES.note, "Comparison: {}".format(document_label))))
+    annotations.append("<p>SubjectID: {}, StudyID: {}, Date: {}, {}</p>".format(subject, study, study_date, \
+                        html_element("span", HTML_CLASSES.note, "Comparison: {}, {}".format(document_label, magnitude))))
 
     report = reformat(subject, study, reports_dir)
     while index < end:
         labeled_sentence = []
         if labels['relevant'][index] == 1:
             need_keywords = True 
-            if labels['predicted'][index] == 1:
+            if labels['predicted'][index] == -1:
                 labeled_sentence.append(html_element("span", HTML_CLASSES.better, labels['sentence'][index]))
-            elif labels['predicted'][index] == -1:
+            elif labels['predicted'][index] == 1:
                 labeled_sentence.append(html_element("span", HTML_CLASSES.worse, labels['sentence'][index]))
             elif labels['predicted'][index] == 0:
                 labeled_sentence.append(html_element("span", HTML_CLASSES.same, labels['sentence'][index]))

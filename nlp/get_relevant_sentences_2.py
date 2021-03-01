@@ -93,7 +93,7 @@ def assign_other_finding(chexpert_row):
         # If no finding is positive, then assume no other findings are present 
         elif col == 'No Finding' and chexpert_row[col] == 1.0:
             for other_col in chexpert_row.index:
-                if other_col not in ignore_labels and chexpert_row[other_col] == 0.0:
+                if other_col not in ignore_labels.union(set(['Lung Opacity'])) and chexpert_row[other_col] == 0.0:
                     other_finding = 0.0 
 
         # Handle 'Lung Opacity' label, which could be indicative of pulmonary edema depending on context
@@ -181,6 +181,24 @@ def get_all_relevance_data(chexpert_row, metadata, true_labels):
         return [sentence, metadata['subject'], metadata['study'], final_label, chexpert_label, chexpert_label_unprocessed, keyword_label, \
                 related_rad_label, other_finding]
 
+def print_incorrect(true_labels, predicted_labels):
+    for index, sentence in true_labels.iterrows():
+        if sentence['relevant'] != predicted_labels['relevant'][index]:
+            print(predicted_labels['relevant'][index], sentence['relevant'], sentence['sentence'])        
+
+def evaluate_labeler(true_labels_path, predicted_labels_path, output_path=None):
+    true_labels = pd.read_csv(true_labels_path)
+    predicted_labels = pd.read_csv(predicted_labels_path)
+
+    result = evaluate(true_labels['relevant'].values, predicted_labels['relevant'].values)
+
+    if output_path is not None:
+        result_df = pd.Series(result).to_frame()
+        result_df.to_csv(output_path)
+    
+    pprint.pprint(result)   
+    print_incorrect(true_labels, predicted_labels)  
+
 def run_labeler(chexpert_label_path, metadata_labels_path, true_labels=False):
     chexpert_sentences = pd.read_csv(chexpert_label_path)
     metadata = pd.read_csv(metadata_labels_path, dtype={'subject': 'str', 'study': 'str'})
@@ -245,7 +263,7 @@ def main_evaluate():
     predicted_labels_path = os.path.join(os.environ['PE_PATH'], args.predicted_labels_path)
     output_path = os.path.join(os.environ['PE_PATH'], args.output_path)
 
-    evaluate_labeler(true_labels_path, predicted_labels_path, output_path=output_path)
+    evaluate_labeler(true_labels_path, predicted_labels_path, output_path=None)
 
 def main_predict():
     """
@@ -277,6 +295,7 @@ def test_script():
     print(get_all_relevance_data(chexpert.iloc[119, :], metadata.iloc[119, :], False))
 
 if __name__ == "__main__":
-    main_label()
+    main_evaluate()
+    # main_label()
     # test_script()
 

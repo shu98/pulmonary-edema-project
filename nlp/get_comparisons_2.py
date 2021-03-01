@@ -5,9 +5,15 @@ import argparse
 import math 
 import numpy as np 
 import pandas as pd
+from pprint import pprint 
 import re
 
+import scispacy
+import spacy
+nlp = spacy.load('en_core_sci_sm')
+
 from nlp.get_relevant_sentences import CONSTANTS
+from util.evaluate import evaluate, evaluate_nclass
 from util.negation import is_positive
 
 class COMPARISON_KEYWORDS:
@@ -21,10 +27,9 @@ def get_search_radius(sentence, match_obj, radius):
     end = match_obj.end()
 
     while start >= 0 and sentence[start] != " ": start -= 1
-    start = max(start, 0)
+    start += 1
 
     while end < len(sentence) and sentence[end] != " ": end += 1
-    end = min(end, len(sentence)-1)
 
     start_sent = sentence[:start]
     end_sent = sentence[end:] 
@@ -32,7 +37,7 @@ def get_search_radius(sentence, match_obj, radius):
     start_split = start_sent.strip().split(" ")[-max(0, radius):]
     end_split = end_sent.strip().split(" ")[:max(0, radius)]
 
-    to_search = "{} {} {}".format(" ".join(start_split), sentence[match_obj.start():match_obj.end()], " ".join(end_split))
+    to_search = "{} {} {}".format(" ".join(start_split), sentence[start:end], " ".join(end_split))
     return to_search
 
 def contains_word(sentence, keywords):
@@ -91,6 +96,48 @@ def get_comparison_simple(sentence, better, worse, same, radius=8):
 
     return (float('nan'), [])
 
+def get_node_with_match(key, node): 
+    to_return = None
+    if re.search(key, node.text) is not None:
+        return node
+    for child in node.children:
+        returned = get_node_with_match(key, child)
+        if returned is not None:
+            to_return = returned
+
+    return to_return 
+
+def get_magnitude_change(sentence, comparison_words):
+    """
+    Magnitude label can be 1 (mild), 2 (moderate), or 3 (marked). Default is moderate 
+    """
+    doc = nlp(sentence.lower())
+    label = 0
+
+    mild_keys = "(slight|minimal|small|tiny|mild|probabl(e|y))"
+    moderate_keys = "(moderate|modest|some)"
+    marked_keys = "(marked|substantial|significant|considerable|clearly|pronounced|resolved|resolution)"
+    for token in doc.sents:
+        for comparison_word in comparison_words:
+            comparison_word_node = get_node_with_match(comparison_word, token.root)
+            if comparison_word_node is None:
+                continue 
+
+            for child in comparison_word_node.children:
+                if child.dep_ == "amod" or child.dep_ == "advmod":
+                    if re.search(mild_keys, child.text) is not None:
+                        label = max(label, 1)
+                    elif re.search(moderate_keys, child.text) is not None:
+                        label = max(label, 2)
+                    elif re.search(marked_keys, child.text) is not None:
+                        label = max(label, 3)
+
+    # If no magnitude assigned, use 'moderate' as default 
+    if label == 0: label = 2 
+
+    score_to_label = {1: 'mild', 2: 'moderate', 3: 'marked'}
+    return score_to_label[label] 
+
 def compare_sentence(sentence, better, worse, same, pe_keywords):
     label, words = get_comparison_simple(sentence, better, worse, same)
     neg_check = (is_positive(sentence, [w[0] for w in words]) == False)
@@ -106,9 +153,10 @@ def compare_sentence(sentence, better, worse, same, pe_keywords):
     else:
         comparison = label
 
-    return (comparison, negation, keywords)
+    magnitude = get_magnitude_change(sentence, [w[0] for w in words]) if abs(comparison) == 1.0 else "irrelevant"
+    return (comparison, negation, keywords, magnitude)
 
-def compare(relevant_sentences_path, true_labels=False):
+def compare(relevant_sentences_path, true_labels=False, use_true_labels=False):
     sentences = pd.read_csv(relevant_sentences_path)
     better = pd.read_csv(COMPARISON_KEYWORDS.better)['regex'].tolist()
     worse = pd.read_csv(COMPARISON_KEYWORDS.worse)['regex'].tolist()
@@ -119,44 +167,76 @@ def compare(relevant_sentences_path, true_labels=False):
     comparisons = pd.DataFrame(float('nan'), index=np.arange(sentences.shape[0]), columns=['predicted'])
     negation = pd.DataFrame(0.0, index=np.arange(sentences.shape[0]), columns=['negation'])
     keywords = pd.DataFrame("", index=np.arange(sentences.shape[0]), columns=['keywords'])
+    magnitude = pd.DataFrame("irrelevant", index=np.arange(sentences.shape[0]), columns=['magnitude'])
 
     for index, sent in sentences.iterrows():
-        if sent['relevant'] == 1.0:
-            comp, neg, kw = compare_sentence(sent['sentence'], better, worse, same, pe_keywords)
+        is_relevant = sent['ground_truth_relevant'] if use_true_labels else sent['relevant']
+        if is_relevant == 1.0:
+            comp, neg, kw, mag = compare_sentence(sent['sentence'], better, worse, same, pe_keywords)
             comparisons['predicted'][index] = comp 
             negation['negation'][index] = neg 
-            keywords['keywords'][index] = kw 
+            keywords['keywords'][index] = kw
+            magnitude['magnitude'][index] = mag 
 
     if true_labels:
         comparisons = pd.concat([sentences['sentence'], sentences['subject'], sentences['study'], sentences['relevant'], sentences['ground_truth_relevant'], sentences['keyword_label'], sentences['chexpert_label'], \
-                                sentences['related_rad_label'], sentences['other_finding'], sentences['comparison_label'], comparisons['predicted'], negation['negation'], keywords['keywords']], axis=1)
+                                sentences['related_rad_label'], sentences['other_finding'], sentences['comparison_label'], comparisons['predicted'], magnitude['magnitude'], negation['negation'], keywords['keywords']], axis=1)
         comparisons = comparisons.rename(columns={"comparison_label": "ground_truth"})
         return comparisons
     else:
         comparisons = pd.concat([sentences['sentence'], sentences['subject'], sentences['study'], sentences['relevant'], sentences['keyword_label'], sentences['chexpert_label'], sentences['related_rad_label'], \
-                                sentences['other_finding'], comparisons['predicted'], negation['negation'], keywords['keywords']], axis=1)
+                                sentences['other_finding'], comparisons['predicted'], magnitude['magnitude'], negation['negation'], keywords['keywords']], axis=1)
         return comparisons
 
-def evaluate(comparisons):
+def print_incorrect(comparisons, use_true_labels=False):
     incorrect, incorrect_relevance = 0, 0
     correct = 0
     positive = 0
     negative = 0
 
     for index, sent in comparisons.iterrows():
-        if sent['ground_truth_relevant'] != sent['relevant']:
-            print(sent['ground_truth_relevant'], sent['relevant'], sent['predicted'], sent['ground_truth'], sent['sentence'])
+        if sent['ground_truth_relevant'] != sent['relevant'] and not use_true_labels:
+            print(sent['ground_truth_relevant'], sent['relevant'], sent['predicted'], -sent['ground_truth'], sent['sentence'])
             incorrect_relevance += 1 
         elif math.isnan(sent['ground_truth']) and math.isnan(sent['predicted']):
             correct += 1 
         elif sent['predicted'] == -sent['ground_truth']:
             correct += 1
         else:
-            print(sent['ground_truth_relevant'], sent['relevant'], sent['predicted'], sent['ground_truth'], sent['sentence'])
+            print(sent['ground_truth_relevant'], sent['relevant'], sent['predicted'], -sent['ground_truth'], sent['sentence'])
             incorrect += 1
 
     print("Incorrect:", incorrect, "Incorrect relevance:", incorrect_relevance, "Correct:", correct)
-    # print("Positive:", positive, "Negative:", negative)
+
+def evaluate_labeler(comparisons, use_true_labels=False, output_path=None):
+    comparisons_no_nan = pd.DataFrame(columns=comparisons.columns)
+    for index, row in comparisons.iterrows():
+        if row['ground_truth_relevant'] == 0.0 and use_true_labels:
+            continue 
+        if abs(row['ground_truth']) == 1.0:
+            row['ground_truth'] = -row['ground_truth']
+        comparisons_no_nan = comparisons_no_nan.append(row, ignore_index=True)
+
+    comparisons_no_nan = comparisons_no_nan.fillna(100)
+    result = evaluate(comparisons_no_nan['ground_truth'].values, comparisons_no_nan['predicted'].values, average="weighted") 
+    result_indiv = evaluate_nclass(comparisons_no_nan['ground_truth'].values, comparisons_no_nan['predicted'].values, classes=[1.0, 0.0, -1.0, 100]) 
+    if output_path is not None:
+        result_df = pd.Series(result).to_frame()
+        result_df.to_csv(output_path)
+    
+    pprint(result)  
+    pprint(result_indiv) 
+    # print_incorrect(comparisons, use_true_labels=use_true_labels)  
+
+def evaluate_main():
+    parser = argparse.ArgumentParser(description='Evaluate comparisons for pulmonary edema')
+    parser.add_argument('comparison_labels_path', type=str, help='Path to file with ground truth and predicted comparison labels')
+    parser.add_argument('output_path', type=str, help='Path to file where comparison labels are written')
+    args = parser.parse_args() 
+
+    comparisons = pd.read_csv(os.path.join(os.environ['PE_PATH'], args.comparison_labels_path))
+    evaluate_labeler(comparisons, use_true_labels=False)
+    # evaluate_labeler(comparisons, use_true_labels=True, output_path=os.path.join(os.environ['PE_PATH'], args.output_path))
 
 def compare_main():
     parser = argparse.ArgumentParser(description='Get comparisons for pulmonary edema')
@@ -166,9 +246,9 @@ def compare_main():
 
     relevant_sentences_path = os.path.join(os.environ['PE_PATH'], args.relevant_sentences_path)
     output_path = os.path.join(os.environ['PE_PATH'], args.output_path)
-    comparisons = compare(relevant_sentences_path, true_labels=True)
+    comparisons = compare(relevant_sentences_path, true_labels=True, use_true_labels=False)
     comparisons.to_csv(output_path)
-    evaluate(comparisons)
+    evaluate_labeler(comparisons, use_true_labels=True)
 
 def predict_main():
     parser = argparse.ArgumentParser(description='Get comparisons for pulmonary edema')
@@ -192,8 +272,10 @@ def test_script():
     print(compare_sentence(sentence, better, worse, same, pe_keywords))
 
 if __name__ == "__main__":
-    compare_main()
+    # compare_main()
     # test_script()
+    # predict_main()
+    evaluate_main()
 
 
 

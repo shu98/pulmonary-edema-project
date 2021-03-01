@@ -13,14 +13,14 @@ def observed(y_true, y_pred):
 def observed_over_expected(y_true, y_pred):
     return float(observed(y_true=y_true, y_pred=y_pred))/ expected(y_true=y_true, y_pred=y_pred)
 
-def precision(y_true, y_pred):
-    return sklearn.metrics.precision_score(y_true, y_pred, average="binary")
+def precision(y_true, y_pred, average):
+    return sklearn.metrics.precision_score(y_true, y_pred, average=average)
 
-def recall(y_true, y_pred):
-    return sklearn.metrics.recall_score(y_true, y_pred, average="binary")
+def recall(y_true, y_pred, average):
+    return sklearn.metrics.recall_score(y_true, y_pred, average=average)
 
-def f1(y_true, y_pred):
-    return sklearn.metrics.f1_score(y_true, y_pred, average="binary")
+def f1(y_true, y_pred, average):
+    return sklearn.metrics.f1_score(y_true, y_pred, average=average)
 
 def sens_spec(y_true, y_pred):
     tp, tn, fp, fn = 0, 0, 0, 0
@@ -36,6 +36,9 @@ def sens_spec(y_true, y_pred):
             'fnr': fn / (tp + fn),
             'tpv': tp / (tp + fp),
             'npv': tn / (tn + fn)}
+
+def classif_report(y_true, y_pred):
+    return sklearn.metrics.classification_report(y_true, y_pred)
 
 METRIC_ORDER = ['accuracy', 'precision', 'recall', 'f1','sens_spec']
 

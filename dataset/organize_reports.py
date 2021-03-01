@@ -10,11 +10,10 @@ def get_metadata(metadata_file, subset=None):
     metadata = metadata.rename(columns={"study_id": "study"})
     metadata = metadata.drop_duplicates(subset='study', keep='first')
     metadata.set_index('study', inplace=True)
-
+    
     metadata = metadata.drop(columns=['dicom_id'])
     if subset is not None:
         metadata = metadata.reindex(subset.index)
-
     return metadata
 
 def get_datetime(date, time):
